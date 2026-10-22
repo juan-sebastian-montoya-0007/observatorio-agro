@@ -1,0 +1,44 @@
+[project]
+name = "eva-explorer-backend"
+version = "0.1.0"
+description = "API and agricultural data pipeline for EVA Explorer"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "alembic==1.20.0",
+  "fastapi==0.158.1",
+  "geoalchemy2>=0.18,<0.19",
+  "openpyxl==3.1.5",
+  "polars==2.0.0",
+  "psycopg[binary]==3.3.6",
+  "pydantic==2.14.1",
+  "pydantic-settings>=2.11,<3",
+  "sqlalchemy==2.1.6",
+  "uvicorn[standard]>=0.38,<0.39",
+]
+
+[dependency-groups]
+dev = [
+  "httpx2==2.15.1",
+  "pytest==9.1.1",
+  "pytest-asyncio>=1.2,<2",
+  "ruff==0.16.8",
+]
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
