@@ -1,14 +1,22 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/components/dashboard/dashboard", () => ({
+  Dashboard: () => (
+    <section role="status" aria-label="Cargando panel agrícola">
+      Cargando datos agrícolas…
+    </section>
+  ),
+}));
 
 import HomePage from "./page";
 
 
 describe("HomePage", () => {
-  it("identifies EVA Explorer without inventing agricultural figures", () => {
+  it("identifies EVA Explorer while the real API data loads", () => {
     render(<HomePage />);
 
     expect(screen.getByRole("heading", { name: "EVA Explorer" })).toBeVisible();
-    expect(screen.getByText("Cargando datos agrícolas…")).toBeVisible();
+    expect(screen.getByRole("status", { name: "Cargando panel agrícola" })).toBeVisible();
   });
 });

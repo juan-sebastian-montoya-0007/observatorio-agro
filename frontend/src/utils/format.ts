@@ -1,4 +1,5 @@
 import type { DecimalValue } from "@/types/api";
+import type { Indicator } from "@/types/filters";
 
 export type MetricValue = DecimalValue | number | null | undefined;
 
@@ -27,4 +28,26 @@ export function formatProduction(value: MetricValue): string {
 
 export function formatYield(value: MetricValue): string {
   return formatWithUnit(value, "t/ha");
+}
+
+export function indicatorLabel(indicator: Indicator): string {
+  return {
+    planted_area_ha: "Área sembrada",
+    harvested_area_ha: "Área cosechada",
+    production_t: "Producción",
+    yield_t_ha: "Rendimiento",
+  }[indicator];
+}
+
+export function indicatorUnit(indicator: Indicator): string {
+  return {
+    planted_area_ha: "ha",
+    harvested_area_ha: "ha",
+    production_t: "t",
+    yield_t_ha: "t/ha",
+  }[indicator];
+}
+
+export function formatIndicator(value: MetricValue, indicator: Indicator): string {
+  return formatWithUnit(value, indicatorUnit(indicator));
 }

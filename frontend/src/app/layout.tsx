@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="es-CO">
-      <body>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
