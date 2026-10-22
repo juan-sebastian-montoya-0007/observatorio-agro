@@ -3,6 +3,7 @@ from app.services.importer.contracts import (
     WorkbookContractError,
     WorkbookFingerprint,
 )
+from app.services.importer.import_service import EVAImportService, ImportFailed, ImportResult
 from app.services.importer.issues import ImportIssueData, NormalizationError
 from app.services.importer.normalizer import NormalizedWorkbook, normalize_workbook, parse_period
 from app.services.importer.reader import read_eva_workbook, sha256_file
@@ -15,6 +16,9 @@ from app.services.importer.reconciliation import (
 __all__ = [
     "ParsedWorkbook",
     "ImportIssueData",
+    "EVAImportService",
+    "ImportFailed",
+    "ImportResult",
     "NormalizationError",
     "NormalizedWorkbook",
     "ReconciliationMetric",
