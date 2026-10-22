@@ -6,12 +6,16 @@ from pydantic import BaseModel, Field
 class ResponseMeta(BaseModel):
     source_version: str | None = None
     source_version_id: int | None = None
+    indicator: str | None = None
+    period_mode: str | None = None
+    unit: str | None = None
 
 
 class CoverageEnvelope(BaseModel):
     status: str
     year_from: int | None = None
     year_to: int | None = None
+    record_count: int | None = None
 
 
 class AnalyticalWarningOut(BaseModel):

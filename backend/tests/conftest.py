@@ -134,6 +134,7 @@ def fact_factory(session: Session) -> Callable[..., AgriculturalRecord]:
         coverage_end_year=2025,
         sha256="a" * 64,
         file_name="fixture.xlsx",
+        status="PUBLISHED",
     )
     department = Department(code="05", name="ANTIOQUIA")
     municipality = Municipality(id=1, code="05001", name="MEDELLÍN", department=department)
@@ -167,10 +168,10 @@ def fact_factory(session: Session) -> Callable[..., AgriculturalRecord]:
     physical_state = PhysicalState(id=1, name="EN FRESCO")
     period = Period(
         id=1,
-        year=2025,
+        year=2024,
         period_type=PeriodType.ANNUAL,
-        original_label="2025",
-        chronological_order=202500,
+        original_label="2024",
+        chronological_order=20240,
     )
     session.add_all([source_version, municipality, crop, *variants, physical_state, period])
     session.commit()
