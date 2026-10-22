@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
 
 
@@ -18,6 +19,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @application.get("/health", tags=["health"])
     def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    application.include_router(api_router, prefix=app_settings.api_prefix)
 
     return application
 

@@ -12,6 +12,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
+from app.db.session import get_session
 from app.main import create_app
 from app.models import (
     AgriculturalRecord,
@@ -33,8 +34,16 @@ pytest_plugins = ("tests.fixtures.workbooks",)
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(create_app())
+def client(session: Session) -> Generator[TestClient]:
+    application = create_app()
+
+    def override_session():
+        yield session
+
+    application.dependency_overrides[get_session] = override_session
+    with TestClient(application) as test_client:
+        yield test_client
+    application.dependency_overrides.clear()
 
 
 @pytest.fixture(scope="session")
@@ -105,6 +114,13 @@ def session(test_engine: Engine) -> Generator[Session]:
         finally:
             db_session.close()
             transaction.rollback()
+
+
+@pytest.fixture
+def imported_dataset(session: Session, valid_workbook):
+    from app.services.importer.import_service import EVAImportService
+
+    return EVAImportService(session).import_file(valid_workbook)
 
 
 @pytest.fixture
