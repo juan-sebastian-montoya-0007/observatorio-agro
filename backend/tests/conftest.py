@@ -29,6 +29,7 @@ from app.models import (
 )
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
+pytest_plugins = ("tests.fixtures.workbooks",)
 
 
 @pytest.fixture
