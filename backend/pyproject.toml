@@ -38,6 +38,9 @@ packages = ["app"]
 addopts = "-ra"
 pythonpath = ["."]
 testpaths = ["tests"]
+markers = [
+  "full_source: opt-in acceptance test against the supplied EVA workbook",
+]
 
 [tool.ruff]
 line-length = 100
