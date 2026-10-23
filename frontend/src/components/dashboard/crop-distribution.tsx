@@ -6,6 +6,7 @@ import type { Indicator } from "@/types/filters";
 import { formatIndicator, indicatorLabel, indicatorUnit } from "@/utils/format";
 
 import { EChart } from "../common/echart";
+import { InfoTooltip } from "../common/info-tooltip";
 
 export function CropDistribution({
   indicator,
@@ -44,9 +45,15 @@ export function CropDistribution({
           <span className="panel__eyebrow">Composición</span>
           <h2>Distribución por cultivo</h2>
         </div>
-        <span className="panel__icon" aria-hidden="true">
-          <ChartPie size={19} />
-        </span>
+        <div className="panel__actions">
+          <InfoTooltip
+            label="Información sobre distribución por cultivo"
+            content={`Compara la participación de los cinco cultivos principales en ${label.toLocaleLowerCase("es-CO")}. El tooltip muestra valor, ${unit} y porcentaje.`}
+          />
+          <span className="panel__icon" aria-hidden="true">
+            <ChartPie size={19} />
+          </span>
+        </div>
       </header>
       <EChart
         ariaLabel={`Gráfico de distribución de ${label} por cultivo`}

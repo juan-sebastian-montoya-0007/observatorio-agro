@@ -115,6 +115,15 @@ describe("Dashboard", () => {
     expect(screen.getAllByText("54 t").length).toBeGreaterThan(0);
     expect(screen.getByText("2 t/ha")).toBeVisible();
     expect(screen.getAllByText("PAPA").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("button", { name: "Información sobre área sembrada" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Información sobre rendimiento" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Información sobre distribución por cultivo" }),
+    ).toBeVisible();
     expect(screen.queryByText(/dato de ejemplo/i)).not.toBeInTheDocument();
   });
 
