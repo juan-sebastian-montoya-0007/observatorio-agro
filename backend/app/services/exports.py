@@ -32,6 +32,7 @@ class AgricultureExportService:
         self,
         repository: AgricultureRepository,
         *,
+        source_version_id: int | None,
         max_rows: int = 200_000,
         batch_size: int = 1_000,
         temp_dir: Path | None = None,
@@ -41,12 +42,13 @@ class AgricultureExportService:
         if batch_size < 1:
             raise ValueError("batch_size must be positive")
         self.repository = repository
+        self.source_version_id = source_version_id
         self.max_rows = max_rows
         self.batch_size = batch_size
         self.temp_dir = temp_dir
 
     def ensure_within_limit(self, selection: RecordSelectionQuery) -> int:
-        row_count = self.repository.count_records(selection)
+        row_count = self.repository.count_records(selection, self.source_version_id)
         if row_count > self.max_rows:
             raise ExportRowLimitExceeded(row_count, self.max_rows)
         return row_count
@@ -57,7 +59,11 @@ class AgricultureExportService:
         writer.writerow(EXPORT_COLUMNS)
         yield self._take_buffer(buffer)
 
-        records = self.repository.iter_records(selection, self.batch_size)
+        records = self.repository.iter_records(
+            selection,
+            self.batch_size,
+            self.source_version_id,
+        )
         try:
             for record in records:
                 data = record.model_dump(mode="python")
@@ -83,7 +89,11 @@ class AgricultureExportService:
             )
             path = Path(temporary.name)
             temporary.close()
-            records = self.repository.iter_records(selection, self.batch_size)
+            records = self.repository.iter_records(
+                selection,
+                self.batch_size,
+                self.source_version_id,
+            )
             worksheet.append(EXPORT_COLUMNS)
             for record in records:
                 data = record.model_dump(mode="python")

@@ -42,8 +42,11 @@ def export_agriculture(
     format: Annotated[ExportFormat, Query()],
 ):
     settings = request.app.state.settings
+    repository = AgricultureRepository(session)
+    version = repository.latest_published_version()
     service = AgricultureExportService(
-        AgricultureRepository(session),
+        repository,
+        source_version_id=version.id if version is not None else None,
         max_rows=settings.export_max_rows,
         batch_size=settings.export_batch_size,
     )

@@ -50,11 +50,15 @@ class RepositoryStub:
         self.closed = False
         self.selection = None
 
-    def count_records(self, selection) -> int:
+    @staticmethod
+    def latest_published_version():
+        return type("Version", (), {"id": 1})()
+
+    def count_records(self, selection, source_version_id) -> int:
         self.selection = selection
         return len(self.rows)
 
-    def iter_records(self, selection, batch_size):
+    def iter_records(self, selection, batch_size, source_version_id):
         self.selection = selection
         try:
             yield from self.rows
@@ -163,20 +167,80 @@ def test_export_limit_returns_stable_413_before_response_stream(session, fact_fa
     assert "content-disposition" not in response.headers
 
 
-def test_csv_asgi_cancellation_closes_cursor_and_request_session(monkeypatch):
-    repository = RepositoryStub([api_record(1), api_record(2)])
+def test_export_pins_latest_version_once_before_count_and_stream(monkeypatch):
+    class SwitchingRepository:
+        def __init__(self) -> None:
+            self.latest_id = 7
+            self.latest_calls = 0
+            self.source_versions: list[tuple[str, int | None]] = []
+
+        def latest_published_version(self):
+            self.latest_calls += 1
+            return type("Version", (), {"id": self.latest_id})()
+
+        def count_records(self, selection, source_version_id):
+            self.source_versions.append(("count", source_version_id))
+            self.latest_id = 8
+            return 1
+
+        def iter_records(self, selection, batch_size, source_version_id):
+            self.source_versions.append(("stream", source_version_id))
+            yield api_record(1)
+
+    repository = SwitchingRepository()
     application = create_app()
-    request_session_closed = False
 
     def override_session():
-        nonlocal request_session_closed
-        try:
-            yield object()
-        finally:
-            request_session_closed = True
+        yield object()
 
     application.dependency_overrides[get_session] = override_session
     monkeypatch.setattr(exports_api, "AgricultureRepository", lambda session: repository)
+
+    with TestClient(application) as test_client:
+        response = test_client.get(
+            "/api/v1/exports/agriculture",
+            params={"format": "csv"},
+        )
+
+    assert response.status_code == 200
+    assert repository.latest_calls == 1
+    assert repository.source_versions == [("count", 7), ("stream", 7)]
+
+
+def test_csv_asgi_cancellation_closes_real_cursor_and_request_session(
+    session, fact_factory, monkeypatch
+):
+    session.add_all([
+        fact_factory(id=1),
+        fact_factory(id=2, crop_variant_id=2, source_row=11),
+    ])
+    session.commit()
+    application = create_app()
+    request_session_closed = False
+    streaming_results = []
+    execute = session.execute
+    close = session.close
+
+    def capture_execute(statement, *args, **kwargs):
+        result = execute(statement, *args, **kwargs)
+        if statement.get_execution_options().get("stream_results"):
+            streaming_results.append(result)
+        return result
+
+    def capture_close():
+        nonlocal request_session_closed
+        request_session_closed = True
+        close()
+
+    def override_session():
+        try:
+            yield session
+        finally:
+            session.close()
+
+    monkeypatch.setattr(session, "execute", capture_execute)
+    monkeypatch.setattr(session, "close", capture_close)
+    application.dependency_overrides[get_session] = override_session
     messages = []
 
     with pytest.raises(asyncio.CancelledError):
@@ -191,7 +255,8 @@ def test_csv_asgi_cancellation_closes_cursor_and_request_session(monkeypatch):
 
     assert messages[-1]["type"] == "http.response.body"
     assert messages[-1]["more_body"] is True
-    assert repository.closed is True
+    assert len(streaming_results) == 1
+    assert streaming_results[0].closed is True
     assert request_session_closed is True
 
 

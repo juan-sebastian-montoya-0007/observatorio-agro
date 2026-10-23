@@ -66,10 +66,19 @@ class RepositoryStub:
         self.closed = False
         self.batch_sizes: list[int] = []
 
-    def count_records(self, selection: RecordSelectionQuery) -> int:
+    def count_records(
+        self,
+        selection: RecordSelectionQuery,
+        source_version_id: int | None,
+    ) -> int:
         return self.count
 
-    def iter_records(self, selection: RecordSelectionQuery, batch_size: int):
+    def iter_records(
+        self,
+        selection: RecordSelectionQuery,
+        batch_size: int,
+        source_version_id: int | None,
+    ):
         self.iterated = True
         self.batch_sizes.append(batch_size)
         try:
@@ -87,7 +96,7 @@ def test_csv_streams_header_and_all_rows_in_repository_order_without_numeric_los
         export_record(1, department_code="08", municipality_code="08001"),
     ]
     repository = RepositoryStub(rows)
-    service = AgricultureExportService(repository, batch_size=1)
+    service = AgricultureExportService(repository, source_version_id=1, batch_size=1)
 
     chunks = list(service.stream_csv(RecordSelectionQuery(sort_by="production_t")))
     parsed = list(csv.DictReader(io.StringIO("".join(chunks))))
@@ -104,7 +113,9 @@ def test_csv_streams_header_and_all_rows_in_repository_order_without_numeric_los
 
 def test_csv_closes_repository_stream_when_consumer_stops_early():
     repository = RepositoryStub([export_record(1), export_record(2)])
-    stream = AgricultureExportService(repository).stream_csv(RecordSelectionQuery())
+    stream = AgricultureExportService(repository, source_version_id=1).stream_csv(
+        RecordSelectionQuery()
+    )
 
     next(stream)
     next(stream)
@@ -115,7 +126,7 @@ def test_csv_closes_repository_stream_when_consumer_stops_early():
 
 def test_default_hard_limit_rejects_before_iteration_and_never_truncates():
     repository = RepositoryStub([export_record(1)], count=200_001)
-    service = AgricultureExportService(repository)
+    service = AgricultureExportService(repository, source_version_id=1)
 
     with pytest.raises(ExportRowLimitExceeded) as captured:
         service.ensure_within_limit(RecordSelectionQuery())
@@ -128,12 +139,35 @@ def test_default_hard_limit_rejects_before_iteration_and_never_truncates():
 
 def test_configured_limit_allows_exact_boundary_and_streams_every_row():
     repository = RepositoryStub([export_record(1), export_record(2)], count=2)
-    service = AgricultureExportService(repository, max_rows=2)
+    service = AgricultureExportService(repository, source_version_id=1, max_rows=2)
 
     assert service.ensure_within_limit(RecordSelectionQuery()) == 2
     parsed = list(csv.DictReader(io.StringIO("".join(service.stream_csv(RecordSelectionQuery())))))
 
     assert [row["id"] for row in parsed] == ["1", "2"]
+
+
+def test_service_reuses_pinned_source_version_for_count_and_stream():
+    class VersionAwareRepository(RepositoryStub):
+        def __init__(self) -> None:
+            super().__init__([export_record(1)])
+            self.source_versions: list[tuple[str, int | None]] = []
+
+        def count_records(self, selection, source_version_id):
+            self.source_versions.append(("count", source_version_id))
+            return 1
+
+        def iter_records(self, selection, batch_size, source_version_id):
+            self.source_versions.append(("stream", source_version_id))
+            yield from self.rows
+
+    repository = VersionAwareRepository()
+    service = AgricultureExportService(repository, source_version_id=41)
+
+    assert service.ensure_within_limit(RecordSelectionQuery()) == 1
+    assert "".join(service.stream_csv(RecordSelectionQuery()))
+
+    assert repository.source_versions == [("count", 41), ("stream", 41)]
 
 
 def test_repository_iterator_matches_record_page_order_and_projection(session, fact_factory):
@@ -150,13 +184,13 @@ def test_repository_iterator_matches_record_page_order_and_projection(session, f
     repository = AgricultureRepository(session)
     selection = RecordSelectionQuery(sort_by="production_t", sort_direction="desc")
 
-    streamed = list(repository.iter_records(selection, batch_size=1))
+    streamed = list(repository.iter_records(selection, batch_size=1, source_version_id=1))
     paged = repository.records(
         RecordPageQuery(sort_by="production_t", sort_direction="desc", page_size=100)
     )
 
     assert streamed == paged.items
-    assert repository.count_records(selection) == paged.total == 2
+    assert repository.count_records(selection, source_version_id=1) == paged.total == 2
 
 
 def test_repository_iterator_closes_result_when_consumer_stops(monkeypatch):
@@ -181,8 +215,11 @@ def test_repository_iterator_closes_result_when_consumer_stops(monkeypatch):
 
     result = StreamingResult()
     repository = AgricultureRepository(SessionStub(result))
-    monkeypatch.setattr(repository, "latest_published_version", lambda: type("V", (), {"id": 1})())
-    stream = repository.iter_records(RecordSelectionQuery(), batch_size=17)
+    stream = repository.iter_records(
+        RecordSelectionQuery(),
+        batch_size=17,
+        source_version_id=1,
+    )
 
     next(stream)
     stream.close()
@@ -194,7 +231,11 @@ def test_repository_iterator_closes_result_when_consumer_stops(monkeypatch):
 def test_xlsx_preserves_divipola_as_text_and_decimal_values(tmp_path):
     row = export_record(1, production_t=Decimal("1234567890123.1234"))
     repository = RepositoryStub([row])
-    path = AgricultureExportService(repository, temp_dir=tmp_path).build_xlsx(
+    path = AgricultureExportService(
+        repository,
+        source_version_id=1,
+        temp_dir=tmp_path,
+    ).build_xlsx(
         RecordSelectionQuery()
     )
 
@@ -218,7 +259,9 @@ def test_xlsx_preserves_divipola_as_text_and_decimal_values(tmp_path):
 
 def test_xlsx_uses_system_temp_directory_by_default():
     repository = RepositoryStub([export_record(1)])
-    path = AgricultureExportService(repository).build_xlsx(RecordSelectionQuery())
+    path = AgricultureExportService(repository, source_version_id=1).build_xlsx(
+        RecordSelectionQuery()
+    )
 
     try:
         assert path.parent == Path(tempfile.gettempdir())
@@ -228,7 +271,11 @@ def test_xlsx_uses_system_temp_directory_by_default():
 
 
 def test_xlsx_stream_removes_temporary_file_on_success_and_early_close(tmp_path):
-    service = AgricultureExportService(RepositoryStub([export_record(1)]), temp_dir=tmp_path)
+    service = AgricultureExportService(
+        RepositoryStub([export_record(1)]),
+        source_version_id=1,
+        temp_dir=tmp_path,
+    )
     completed_path = service.build_xlsx(RecordSelectionQuery())
 
     assert b"".join(service.stream_xlsx(completed_path))
@@ -244,7 +291,7 @@ def test_xlsx_stream_removes_temporary_file_on_success_and_early_close(tmp_path)
 
 def test_xlsx_build_failure_closes_record_stream_and_removes_temporary_file(tmp_path):
     repository = RepositoryStub([export_record(1), export_record(2)], fail_after=1)
-    service = AgricultureExportService(repository, temp_dir=tmp_path)
+    service = AgricultureExportService(repository, source_version_id=1, temp_dir=tmp_path)
 
     with pytest.raises(RuntimeError, match="database stream failed"):
         service.build_xlsx(RecordSelectionQuery())
@@ -254,7 +301,11 @@ def test_xlsx_build_failure_closes_record_stream_and_removes_temporary_file(tmp_
 
 
 def test_xlsx_constructor_failure_removes_temporary_file(tmp_path, monkeypatch):
-    service = AgricultureExportService(RepositoryStub([export_record(1)]), temp_dir=tmp_path)
+    service = AgricultureExportService(
+        RepositoryStub([export_record(1)]),
+        source_version_id=1,
+        temp_dir=tmp_path,
+    )
 
     def fail_workbook_construction(*args, **kwargs):
         raise RuntimeError("workbook construction failed")
@@ -268,7 +319,11 @@ def test_xlsx_constructor_failure_removes_temporary_file(tmp_path, monkeypatch):
 
 
 def test_xlsx_transmission_failure_removes_temporary_file(tmp_path, monkeypatch):
-    service = AgricultureExportService(RepositoryStub([export_record(1)]), temp_dir=tmp_path)
+    service = AgricultureExportService(
+        RepositoryStub([export_record(1)]),
+        source_version_id=1,
+        temp_dir=tmp_path,
+    )
     path = service.build_xlsx(RecordSelectionQuery())
     real_open = Path.open
 

@@ -100,24 +100,27 @@ class AgricultureRepository:
         ]
         return RecordPage(items, total, query.page, query.page_size)
 
-    def count_records(self, selection: RecordSelectionQuery) -> int:
-        version = self.latest_published_version()
-        if version is None:
+    def count_records(
+        self,
+        selection: RecordSelectionQuery,
+        source_version_id: int | None,
+    ) -> int:
+        if source_version_id is None:
             return 0
-        return self._count_records(version.id, selection)
+        return self._count_records(source_version_id, selection)
 
     def iter_records(
         self,
         selection: RecordSelectionQuery,
         batch_size: int,
+        source_version_id: int | None,
     ) -> Iterator[AgriculturalRecordOut]:
         if batch_size < 1:
             raise ValueError("batch_size must be positive")
-        version = self.latest_published_version()
-        if version is None:
+        if source_version_id is None:
             return
 
-        statement = self._record_statement(version.id, selection).execution_options(
+        statement = self._record_statement(source_version_id, selection).execution_options(
             stream_results=True,
             yield_per=batch_size,
         )
