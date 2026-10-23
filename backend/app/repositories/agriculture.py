@@ -19,7 +19,14 @@ from app.models import (
     PhysicalState,
     SourceVersion,
 )
+from app.schemas.agriculture import AgriculturalRecordOut
 from app.schemas.filters import AgricultureFilters
+from app.schemas.records import (
+    RecordPageQuery,
+    RecordSelectionQuery,
+    RecordSortField,
+    SortDirection,
+)
 from app.statistics import Indicator, PeriodMode
 
 
@@ -55,6 +62,14 @@ class RankingItem:
     record_count: int
 
 
+@dataclass(frozen=True, slots=True)
+class RecordPage:
+    items: list[AgriculturalRecordOut]
+    total: int
+    page: int
+    page_size: int
+
+
 class AgricultureRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
@@ -66,6 +81,68 @@ class AgricultureRepository:
             .order_by(SourceVersion.coverage_end_year.desc(), SourceVersion.id.desc())
             .limit(1)
         )
+
+    def records(self, query: RecordPageQuery) -> RecordPage:
+        version = self.latest_published_version()
+        if version is None:
+            return RecordPage([], 0, query.page, query.page_size)
+
+        conditions = self._conditions(version.id, query)
+        total = self.session.scalar(
+            self._with_joins(select(func.count(AgriculturalRecord.id))).where(*conditions)
+        )
+        sort_column = {
+            RecordSortField.YEAR: Period.year,
+            RecordSortField.PERIOD_TYPE: Period.period_type,
+            RecordSortField.DEPARTMENT: Department.name,
+            RecordSortField.MUNICIPALITY: Municipality.name,
+            RecordSortField.CROP: Crop.name,
+            RecordSortField.CROP_VARIANT: CropVariant.disaggregation,
+            RecordSortField.PHYSICAL_STATE: PhysicalState.name,
+            RecordSortField.PLANTED_AREA: AgriculturalRecord.planted_area_ha,
+            RecordSortField.HARVESTED_AREA: AgriculturalRecord.harvested_area_ha,
+            RecordSortField.PRODUCTION: AgriculturalRecord.production_t,
+            RecordSortField.REPORTED_YIELD: AgriculturalRecord.reported_yield_t_ha,
+            RecordSortField.SOURCE_ROW: AgriculturalRecord.source_row,
+        }[query.sort_by]
+        ordering = (
+            sort_column.asc() if query.sort_direction is SortDirection.ASC else sort_column.desc()
+        )
+        statement = (
+            self._with_joins(select(
+                AgriculturalRecord.id,
+                Department.code.label("department_code"),
+                Department.name.label("department_name"),
+                Municipality.code.label("municipality_code"),
+                Municipality.name.label("municipality_name"),
+                Period.year, Period.period_type,
+                Crop.id.label("crop_id"),
+                Crop.base_code.label("crop_base_code"),
+                Crop.name.label("crop_name"),
+                CropVariant.id.label("crop_variant_id"),
+                CropVariant.source_code.label("crop_variant_source_code"),
+                CropVariant.disaggregation.label("crop_variant_disaggregation"),
+                PhysicalState.name.label("physical_state"),
+                AgriculturalRecord.planted_area_ha,
+                AgriculturalRecord.harvested_area_ha,
+                AgriculturalRecord.production_t,
+                AgriculturalRecord.reported_yield_t_ha,
+                AgriculturalRecord.source_version_id,
+                SourceVersion.version_label.label("source_version_label"),
+                AgriculturalRecord.trace_metadata["sheet"].as_string().label("source_sheet"),
+                AgriculturalRecord.source_row,
+            ))
+            .join(SourceVersion, SourceVersion.id == AgriculturalRecord.source_version_id)
+            .where(*conditions)
+            .order_by(ordering.nullslast(), AgriculturalRecord.id.asc())
+            .limit(query.page_size)
+            .offset((query.page - 1) * query.page_size)
+        )
+        items = [
+            AgriculturalRecordOut.model_validate(row, from_attributes=True)
+            for row in self.session.execute(statement)
+        ]
+        return RecordPage(items, int(total or 0), query.page, query.page_size)
 
     def summary(self, filters: AgricultureFilters) -> SummaryResult:
         version = self.latest_published_version()
@@ -259,6 +336,12 @@ class AgricultureRepository:
         for value, column in optional_conditions:
             if value is not None:
                 conditions.append(column == value)
+        if isinstance(filters, RecordSelectionQuery) and filters.search:
+            conditions.append(or_(
+                *(column.icontains(filters.search, autoescape=True) for column in (
+                    Department.name, Municipality.name, Crop.name, CropVariant.disaggregation,
+                ))
+            ))
         if filters.period_mode is PeriodMode.AGRICULTURAL_YEAR:
             conditions.append(self._agricultural_year_condition())
         else:

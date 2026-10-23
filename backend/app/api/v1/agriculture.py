@@ -4,14 +4,26 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import get_session
-from app.schemas.agriculture import RankingDimension, RankingItemOut, SeriesPointOut, SummaryData
+from app.schemas.agriculture import (
+    RankingDimension,
+    RankingItemOut,
+    RecordPageOut,
+    SeriesPointOut,
+    SummaryData,
+)
 from app.schemas.common import AnalyticalResponse
 from app.schemas.filters import AgricultureFilters
+from app.schemas.records import RecordPageQuery
 from app.services.analytics import AnalyticsService
 
 router = APIRouter(prefix="/agriculture", tags=["agriculture"])
 SessionDependency = Annotated[Session, Depends(get_session)]
 FilterQuery = Annotated[AgricultureFilters, Query()]
+
+
+@router.get("/records", response_model=AnalyticalResponse[RecordPageOut])
+def records(query: Annotated[RecordPageQuery, Query()], session: SessionDependency):
+    return AnalyticsService(session).records(query)
 
 
 @router.get("/summary", response_model=AnalyticalResponse[SummaryData | None])

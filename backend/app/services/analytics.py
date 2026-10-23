@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.repositories.agriculture import AgricultureRepository, SummaryResult
-from app.schemas.agriculture import RankingItemOut, SeriesPointOut, SummaryData
+from app.schemas.agriculture import RankingItemOut, RecordPageOut, SeriesPointOut, SummaryData
 from app.schemas.common import (
     AnalyticalResponse,
     AnalyticalWarningOut,
@@ -11,6 +11,7 @@ from app.schemas.common import (
     ResponseMeta,
 )
 from app.schemas.filters import AgricultureFilters
+from app.schemas.records import RecordPageQuery
 from app.statistics import AnalyticalWarning, Indicator, comparison_warnings
 
 _METHODOLOGY = [
@@ -37,6 +38,21 @@ def indicator_unit(indicator: Indicator) -> str:
 class AnalyticsService:
     def __init__(self, session: Session) -> None:
         self.repository = AgricultureRepository(session)
+
+    def records(self, query: RecordPageQuery) -> AnalyticalResponse[RecordPageOut]:
+        version = self.repository.latest_published_version()
+        summary = self.repository.summary(query)
+        result = self.repository.records(query)
+        return AnalyticalResponse(
+            data=RecordPageOut.model_validate(result, from_attributes=True),
+            meta=self._meta(version, query),
+            coverage=self._coverage(summary),
+            warnings=self._warnings(query, summary.coverage_status, version),
+            methodology=[*_METHODOLOGY, (
+                "El rendimiento reportado es un dato de detalle de la fuente y no sustituye "
+                "el rendimiento agregado calculado como razón de sumas."
+            )],
+        )
 
     def summary(
         self,
