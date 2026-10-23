@@ -5,7 +5,7 @@ import "./globals.css";
 
 
 export const metadata: Metadata = {
-  title: "EVA Explorer",
+  title: "Observatorio Agro",
   description: "Consulta pública de las Evaluaciones Agropecuarias Municipales de Colombia",
 };
 

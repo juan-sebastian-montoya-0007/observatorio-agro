@@ -1,7 +1,7 @@
 [project]
-name = "eva-explorer-backend"
+name = "observatorio-agro-backend"
 version = "0.1.0"
-description = "API and agricultural data pipeline for EVA Explorer"
+description = "Observatorio Agro"
 requires-python = ">=3.13,<3.14"
 dependencies = [
   "alembic==1.20.0",

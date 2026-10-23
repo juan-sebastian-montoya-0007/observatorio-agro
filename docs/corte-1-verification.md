@@ -1,6 +1,8 @@
-# EVA Explorer — verificación reproducible del Corte 1
+# Observatorio Agro — verificación reproducible del Corte 1
 
 Esta guía ejecuta el flujo vertical en Windows PowerShell: valida el libro suministrado sin modificarlo, prepara la base, importa los datos, levanta la aplicación y corre las pruebas.
+
+Datos obtenidos de las Evaluaciones Agropecuarias Municipales (EVA), publicadas por la UPRA.
 
 ## 1. Prerrequisitos
 

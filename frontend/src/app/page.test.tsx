@@ -13,10 +13,10 @@ import HomePage from "./page";
 
 
 describe("HomePage", () => {
-  it("identifies EVA Explorer while the real API data loads", () => {
+  it("identifies Observatorio Agro while the real API data loads", () => {
     render(<HomePage />);
 
-    expect(screen.getByRole("heading", { name: "EVA Explorer" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Observatorio Agro" })).toBeVisible();
     expect(screen.getByRole("status", { name: "Cargando panel agrícola" })).toBeVisible();
   });
 });

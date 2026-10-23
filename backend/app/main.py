@@ -7,7 +7,7 @@ from app.core.config import Settings, get_settings
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     app_settings = settings or get_settings()
-    application = FastAPI(title="EVA Explorer API", version="0.1.0")
+    application = FastAPI(title="Observatorio Agro API", version="0.1.0")
     application.state.settings = app_settings
     application.add_middleware(
         CORSMiddleware,

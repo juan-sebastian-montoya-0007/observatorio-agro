@@ -5,13 +5,11 @@ import {
   GitCompareArrows,
   Info,
   LayoutDashboard,
-  Map,
   Sprout,
 } from "lucide-react";
 
 const modules = [
   { label: "Resumen General", icon: LayoutDashboard, href: "/", available: true },
-  { label: "Geovisor", icon: Map, available: false },
   { label: "Consultas", icon: BarChart3, available: false },
   { label: "Comparador", icon: GitCompareArrows, available: false },
   { label: "Repositorio", icon: Database, available: false },
@@ -21,13 +19,14 @@ const modules = [
 export function Sidebar() {
   return (
     <aside className="sidebar">
-      <div className="sidebar__brand" aria-label="EVA Explorer">
+      <div className="sidebar__brand" aria-label="Observatorio Agro">
         <span className="sidebar__brand-mark" aria-hidden="true">
           <Sprout size={23} strokeWidth={2.2} />
         </span>
         <span>
-          <strong>EVA</strong>
-          <small>Explorer</small>
+          <strong>Observatorio</strong>
+          <strong>Agro</strong>
+          <small>Consulta pública</small>
         </span>
       </div>
 
@@ -60,8 +59,11 @@ export function Sidebar() {
       <div className="sidebar__footer">
         <span className="sidebar__status-dot" aria-hidden="true" />
         <span>
-          Datos abiertos
-          <small>Evaluaciones agropecuarias</small>
+          Fuente de datos
+          <small>
+            Datos obtenidos de las Evaluaciones Agropecuarias Municipales (EVA), publicadas
+            por la UPRA.
+          </small>
         </span>
       </div>
     </aside>

@@ -16,6 +16,12 @@ def test_openapi_lists_read_only_catalog_and_geography_routes(client):
     assert not any("import" in path for path in document["paths"])
 
 
+def test_openapi_uses_observatorio_agro_title(client):
+    document = client.get("/openapi.json").json()
+
+    assert document["info"]["title"] == "Observatorio Agro API"
+
+
 def test_openapi_records_exposes_selection_pagination_and_sort_enums(client):
     document = client.get("/openapi.json").json()
     operation = document["paths"]["/api/v1/agriculture/records"]["get"]

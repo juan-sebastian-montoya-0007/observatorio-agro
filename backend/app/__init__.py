@@ -1,1 +1,1 @@
-"""EVA Explorer backend application."""
+"""Observatorio Agro backend application."""

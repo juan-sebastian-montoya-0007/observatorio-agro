@@ -1,6 +1,8 @@
-# EVA Explorer
+# Observatorio Agro
 
-EVA Explorer transforma las Evaluaciones Agropecuarias Municipales de Colombia en una plataforma pública de consulta y análisis trazable.
+Observatorio Agro transforma datos agropecuarios de Colombia en una plataforma pública de consulta y análisis trazable.
+
+Datos obtenidos de las Evaluaciones Agropecuarias Municipales (EVA), publicadas por la UPRA.
 
 ## Requisitos
 
@@ -12,11 +14,11 @@ EVA Explorer transforma las Evaluaciones Agropecuarias Municipales de Colombia e
 
 1. Copie `.env.example` como `.env` y ajuste únicamente sus credenciales locales.
 2. Levante PostgreSQL: `docker compose up -d db`.
-3. Aplique las migraciones e importe una fuente EVA desde el backend nativo.
+3. Aplique las migraciones e importe el libro fuente desde el backend nativo.
 4. Ejecute `docker compose up --build -d`.
 5. Abra `http://localhost:3000`; la API queda en `http://localhost:8000`.
 
-El archivo fuente EVA no se versiona ni se modifica. Los comandos completos de PowerShell para validar su hash, importarlo, comprobar la idempotencia y ejecutar las pruebas están en [Verificación del Corte 1](docs/corte-1-verification.md).
+El archivo fuente no se versiona ni se modifica. Los comandos completos de PowerShell para validar su hash, importarlo, comprobar la idempotencia y ejecutar las pruebas están en [Verificación del Corte 1](docs/corte-1-verification.md).
 
 ## Estado del Corte 1
 

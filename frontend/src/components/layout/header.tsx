@@ -9,7 +9,7 @@ export function Header() {
           <ChevronRight size={14} aria-hidden="true" />
           <strong>Resumen General</strong>
         </div>
-        <h1>EVA Explorer</h1>
+        <h1>Observatorio Agro</h1>
       </div>
       <a className="source-link" href="#fuente-datos">
         <BookOpen size={17} aria-hidden="true" />
