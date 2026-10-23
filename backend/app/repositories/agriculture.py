@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -87,10 +88,61 @@ class AgricultureRepository:
         if version is None:
             return RecordPage([], 0, query.page, query.page_size)
 
-        conditions = self._conditions(version.id, query)
-        total = self.session.scalar(
-            self._with_joins(select(func.count(AgriculturalRecord.id))).where(*conditions)
+        total = self._count_records(version.id, query)
+        statement = (
+            self._record_statement(version.id, query)
+            .limit(query.page_size)
+            .offset((query.page - 1) * query.page_size)
         )
+        items = [
+            AgriculturalRecordOut.model_validate(row, from_attributes=True)
+            for row in self.session.execute(statement)
+        ]
+        return RecordPage(items, total, query.page, query.page_size)
+
+    def count_records(self, selection: RecordSelectionQuery) -> int:
+        version = self.latest_published_version()
+        if version is None:
+            return 0
+        return self._count_records(version.id, selection)
+
+    def iter_records(
+        self,
+        selection: RecordSelectionQuery,
+        batch_size: int,
+    ) -> Iterator[AgriculturalRecordOut]:
+        if batch_size < 1:
+            raise ValueError("batch_size must be positive")
+        version = self.latest_published_version()
+        if version is None:
+            return
+
+        statement = self._record_statement(version.id, selection).execution_options(
+            stream_results=True,
+            yield_per=batch_size,
+        )
+        result = self.session.execute(statement)
+        try:
+            for partition in result.partitions(batch_size):
+                for row in partition:
+                    yield AgriculturalRecordOut.model_validate(row, from_attributes=True)
+        finally:
+            result.close()
+
+    def _count_records(
+        self,
+        source_version_id: int,
+        selection: RecordSelectionQuery,
+    ) -> int:
+        total = self.session.scalar(
+            self._with_joins(select(func.count(AgriculturalRecord.id))).where(
+                *self._conditions(source_version_id, selection)
+            )
+        )
+        return int(total or 0)
+
+    @staticmethod
+    def _record_ordering(selection: RecordSelectionQuery):
         sort_column = {
             RecordSortField.YEAR: Period.year,
             RecordSortField.PERIOD_TYPE: Period.period_type,
@@ -104,12 +156,22 @@ class AgricultureRepository:
             RecordSortField.PRODUCTION: AgriculturalRecord.production_t,
             RecordSortField.REPORTED_YIELD: AgriculturalRecord.reported_yield_t_ha,
             RecordSortField.SOURCE_ROW: AgriculturalRecord.source_row,
-        }[query.sort_by]
+        }[selection.sort_by]
         ordering = (
-            sort_column.asc() if query.sort_direction is SortDirection.ASC else sort_column.desc()
+            sort_column.asc()
+            if selection.sort_direction is SortDirection.ASC
+            else sort_column.desc()
         )
-        statement = (
-            self._with_joins(select(
+        return ordering.nullslast(), AgriculturalRecord.id.asc()
+
+    def _record_statement(
+        self,
+        source_version_id: int,
+        selection: RecordSelectionQuery,
+    ) -> Select:
+        return (
+            self._with_joins(
+                select(
                 AgriculturalRecord.id,
                 Department.code.label("department_code"),
                 Department.name.label("department_name"),
@@ -131,18 +193,12 @@ class AgricultureRepository:
                 SourceVersion.version_label.label("source_version_label"),
                 AgriculturalRecord.trace_metadata["sheet"].as_string().label("source_sheet"),
                 AgriculturalRecord.source_row,
-            ))
+                )
+            )
             .join(SourceVersion, SourceVersion.id == AgriculturalRecord.source_version_id)
-            .where(*conditions)
-            .order_by(ordering.nullslast(), AgriculturalRecord.id.asc())
-            .limit(query.page_size)
-            .offset((query.page - 1) * query.page_size)
+            .where(*self._conditions(source_version_id, selection))
+            .order_by(*self._record_ordering(selection))
         )
-        items = [
-            AgriculturalRecordOut.model_validate(row, from_attributes=True)
-            for row in self.session.execute(statement)
-        ]
-        return RecordPage(items, int(total or 0), query.page, query.page_size)
 
     def summary(self, filters: AgricultureFilters) -> SummaryResult:
         version = self.latest_published_version()

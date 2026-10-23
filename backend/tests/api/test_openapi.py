@@ -7,6 +7,7 @@ def test_openapi_lists_read_only_catalog_and_geography_routes(client):
         "/api/v1/geography/departments",
         "/api/v1/geography/municipalities",
         "/api/v1/agriculture/records",
+        "/api/v1/exports/agriculture",
     }
 
     assert expected_paths <= set(document["paths"])
@@ -32,3 +33,15 @@ def test_openapi_records_exposes_selection_pagination_and_sort_enums(client):
         "physical_state", "planted_area_ha", "harvested_area_ha", "production_t",
         "reported_yield_t_ha", "source_row",
     }
+
+
+def test_openapi_export_exposes_format_and_shared_record_selection(client):
+    document = client.get("/openapi.json").json()
+    operation = document["paths"]["/api/v1/exports/agriculture"]["get"]
+    parameters = {parameter["name"]: parameter["schema"] for parameter in operation["parameters"]}
+
+    assert {"format", "search", "sort_by", "sort_direction", "period_type"} <= parameters.keys()
+    export_format = parameters["format"]["$ref"].rsplit("/", 1)[-1]
+    assert set(document["components"]["schemas"][export_format]["enum"]) == {"csv", "xlsx"}
+    assert "page" not in parameters
+    assert "page_size" not in parameters
