@@ -11,7 +11,7 @@ from app.schemas.common import (
     ResponseMeta,
 )
 from app.schemas.filters import AgricultureFilters
-from app.statistics import AnalyticalWarning, comparison_warnings
+from app.statistics import AnalyticalWarning, Indicator, comparison_warnings
 
 _METHODOLOGY = [
     (
@@ -23,6 +23,15 @@ _METHODOLOGY = [
         "equivalente para evitar doble conteo."
     ),
 ]
+
+
+def indicator_unit(indicator: Indicator) -> str:
+    return {
+        Indicator.PLANTED_AREA: "ha",
+        Indicator.HARVESTED_AREA: "ha",
+        Indicator.PRODUCTION: "t",
+        Indicator.YIELD: "t/ha",
+    }[indicator]
 
 
 class AnalyticsService:
@@ -82,7 +91,7 @@ class AnalyticsService:
         ]
         return AnalyticalResponse(
             data=data,
-            meta=self._meta(version, filters, unit=filters.indicator.value),
+            meta=self._meta(version, filters),
             coverage=self._coverage(summary),
             warnings=self._warnings(filters, summary.coverage_status, version),
             methodology=_METHODOLOGY,
@@ -102,13 +111,14 @@ class AnalyticsService:
         )
 
     @staticmethod
-    def _meta(version, filters: AgricultureFilters, unit: str | None = None) -> ResponseMeta:
+    def _meta(version, filters: AgricultureFilters) -> ResponseMeta:
         return ResponseMeta(
             source_version=version.version_label if version is not None else None,
             source_version_id=version.id if version is not None else None,
             indicator=filters.indicator.value,
             period_mode=filters.period_mode.value,
-            unit=unit,
+            unit=indicator_unit(filters.indicator),
+            filters=filters.model_dump(mode="json", by_alias=True, exclude_none=True),
         )
 
     @staticmethod

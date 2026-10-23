@@ -1,4 +1,5 @@
 export type PeriodMode = "SOURCE" | "AGRICULTURAL_YEAR";
+export type PeriodType = "ANNUAL" | "SEMESTER_A" | "SEMESTER_B";
 
 export type Indicator =
   | "planted_area_ha"
@@ -17,6 +18,7 @@ export type DashboardFilters = {
   physicalState?: string;
   year: number;
   periodMode: PeriodMode;
+  periodType?: PeriodType;
   indicator: Indicator;
 };
 

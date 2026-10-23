@@ -195,3 +195,55 @@ def test_rankings_enforce_bounded_limit(repository, seeded_records, limit):
             indicator=Indicator.PRODUCTION,
             limit=limit,
         )
+
+
+@pytest.mark.parametrize(
+    ("period_type", "production"),
+    [("ANNUAL", "100"), ("SEMESTER_A", "40"), ("SEMESTER_B", "60")],
+)
+def test_source_queries_aggregate_only_the_selected_period(
+    session, fact_factory, repository, period_type, production
+):
+    session.add_all(
+        [
+            Period(
+                id=2, year=2024, period_type=PeriodType.SEMESTER_A,
+                original_label="2024A", chronological_order=20241,
+            ),
+            Period(
+                id=3, year=2024, period_type=PeriodType.SEMESTER_B,
+                original_label="2024B", chronological_order=20242,
+            ),
+        ]
+    )
+    session.flush()
+    session.add_all(
+        [
+            fact_factory(period_id=1, production_t=Decimal("100"), source_row=10),
+            fact_factory(period_id=2, production_t=Decimal("40"), source_row=11),
+            fact_factory(period_id=3, production_t=Decimal("60"), source_row=12),
+        ]
+    )
+    session.commit()
+    filters = AgricultureFilters.model_validate(
+        {
+            "year_from": 2024,
+            "year_to": 2024,
+            "period_mode": "SOURCE",
+            "period_type": period_type,
+        }
+    )
+
+    summary = repository.summary(filters)
+    series = repository.series(filters)
+    rankings = repository.rankings(filters, "crop", Indicator.PRODUCTION, 10)
+
+    assert summary.production_t == Decimal(production)
+    assert summary.record_count == 1
+    assert summary.coverage_status == "AVAILABLE"
+    assert len(series) == 1
+    assert series[0].period_type == period_type
+    assert series[0].production_t == Decimal(production)
+    assert len(rankings) == 1
+    assert rankings[0].value == Decimal(production)
+    assert rankings[0].record_count == 1

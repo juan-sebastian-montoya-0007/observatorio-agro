@@ -7,6 +7,7 @@ import type {
   DashboardFilters,
   Indicator,
   PeriodMode,
+  PeriodType,
 } from "@/types/filters";
 
 export const DEFAULT_DASHBOARD_FILTERS: DashboardFilters = {
@@ -16,6 +17,7 @@ export const DEFAULT_DASHBOARD_FILTERS: DashboardFilters = {
 };
 
 const PERIOD_MODES = new Set<PeriodMode>(["SOURCE", "AGRICULTURAL_YEAR"]);
+const PERIOD_TYPES = new Set<PeriodType>(["ANNUAL", "SEMESTER_A", "SEMESTER_B"]);
 const INDICATORS = new Set<Indicator>([
   "planted_area_ha",
   "harvested_area_ha",
@@ -58,6 +60,8 @@ export function readFilters(
   const year = parsedYear >= 2019 && parsedYear <= 2025 ? parsedYear : 2025;
   const rawMode = params.get("period_mode") as PeriodMode | null;
   const periodMode = rawMode && PERIOD_MODES.has(rawMode) ? rawMode : "AGRICULTURAL_YEAR";
+  const rawPeriodType = params.get("period_type") as PeriodType | null;
+  const periodType = rawPeriodType && PERIOD_TYPES.has(rawPeriodType) ? rawPeriodType : "ANNUAL";
   const rawIndicator = params.get("indicator") as Indicator | null;
   const indicator =
     rawIndicator && INDICATORS.has(rawIndicator) ? rawIndicator : "production_t";
@@ -81,6 +85,7 @@ export function readFilters(
       : {}),
     year,
     periodMode,
+    ...(periodMode === "SOURCE" ? { periodType } : {}),
     indicator,
   };
 }
@@ -91,6 +96,9 @@ export function writeFilters(filters: DashboardFilters): URLSearchParams {
     period_mode: filters.periodMode,
     indicator: filters.indicator,
   });
+  if (filters.periodMode === "SOURCE") {
+    params.set("period_type", filters.periodType ?? "ANNUAL");
+  }
   const values: Array<[string, string | number | undefined]> = [
     ["department", filters.department],
     ["municipality", filters.municipality],
@@ -126,6 +134,11 @@ export function updateFilter<K extends keyof DashboardFilters>(
   }
   if (key === "municipality" && !next.department) {
     delete next.municipality;
+  }
+  if (next.periodMode === "SOURCE") {
+    next.periodType ??= "ANNUAL";
+  } else {
+    delete next.periodType;
   }
   return next;
 }

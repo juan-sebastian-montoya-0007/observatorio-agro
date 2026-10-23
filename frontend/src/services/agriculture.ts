@@ -36,6 +36,9 @@ function agricultureParams(
   addOptional(params, "subgroup", filters.subgroup);
   addOptional(params, "cycle", filters.cycle);
   addOptional(params, "physical_state", filters.physicalState);
+  if (filters.periodMode === "SOURCE") {
+    params.set("period_type", filters.periodType ?? "ANNUAL");
+  }
   return params;
 }
 

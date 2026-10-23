@@ -261,6 +261,8 @@ class AgricultureRepository:
                 conditions.append(column == value)
         if filters.period_mode is PeriodMode.AGRICULTURAL_YEAR:
             conditions.append(self._agricultural_year_condition())
+        else:
+            conditions.append(Period.period_type == filters.period_type)
         return conditions
 
     @staticmethod

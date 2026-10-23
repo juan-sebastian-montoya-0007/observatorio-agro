@@ -5,6 +5,32 @@ from app.schemas.filters import AgricultureFilters
 from app.statistics import Indicator, PeriodMode, comparison_warnings
 
 
+def test_filters_default_to_safe_agricultural_year():
+    assert AgricultureFilters().period_mode is PeriodMode.AGRICULTURAL_YEAR
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"period_mode": "SOURCE"},
+        {"period_mode": "SOURCE", "period_type": "OTHER"},
+        {"period_mode": "AGRICULTURAL_YEAR", "period_type": "SEMESTER_A"},
+    ],
+)
+def test_filters_reject_missing_or_incompatible_source_period(payload):
+    with pytest.raises(ValidationError):
+        AgricultureFilters.model_validate(payload)
+
+
+@pytest.mark.parametrize("period_type", ["ANNUAL", "SEMESTER_A", "SEMESTER_B"])
+def test_source_filters_accept_an_explicit_period(period_type):
+    filters = AgricultureFilters.model_validate(
+        {"period_mode": "SOURCE", "period_type": period_type}
+    )
+
+    assert filters.period_type.value == period_type
+
+
 def test_filters_accept_aliases_and_valid_parent_relationship():
     filters = AgricultureFilters.model_validate(
         {

@@ -9,6 +9,7 @@ class ResponseMeta(BaseModel):
     indicator: str | None = None
     period_mode: str | None = None
     unit: str | None = None
+    filters: dict[str, object] = Field(default_factory=dict)
 
 
 class CoverageEnvelope(BaseModel):

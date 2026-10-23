@@ -104,6 +104,21 @@ export function DashboardFilters({
           <option value="SOURCE">Periodos de la fuente</option>
         </select>
       </label>
+      {filters.periodMode === "SOURCE" && (
+        <label>
+          <span>Periodo de la fuente</span>
+          <select
+            value={filters.periodType ?? "ANNUAL"}
+            onChange={(event) =>
+              onChange("periodType", event.target.value as DashboardFilterValues["periodType"])
+            }
+          >
+            <option value="ANNUAL">Anual</option>
+            <option value="SEMESTER_A">Semestre A</option>
+            <option value="SEMESTER_B">Semestre B</option>
+          </select>
+        </label>
+      )}
       <label>
         <span>Indicador</span>
         <select

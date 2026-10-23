@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiContractError } from "./http";
-import { getSummary } from "./agriculture";
+import { getRankings, getSeries, getSummary } from "./agriculture";
 
 const envelope = {
   data: {
@@ -19,6 +19,51 @@ const envelope = {
 
 describe("agriculture service", () => {
   afterEach(() => vi.unstubAllGlobals());
+
+  describe.each([
+    ["summary", getSummary],
+    ["series", getSeries],
+    ["rankings", (filters: Parameters<typeof getSummary>[0]) => getRankings(filters, "crop")],
+  ] as const)("%s source period requests", (endpoint, request) => {
+    it.each(["ANNUAL", "SEMESTER_A", "SEMESTER_B"] as const)(
+      "sends the selected %s source period", async (periodType) => {
+        const response = { ...envelope, data: endpoint === "summary" ? envelope.data : [] };
+        const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(response)));
+        vi.stubGlobal("fetch", fetchMock);
+        await request({ year: 2024, periodMode: "SOURCE", periodType, indicator: "production_t" });
+
+        const url = new URL(fetchMock.mock.calls[0][0]);
+        expect(url.pathname).toBe(`/api/v1/agriculture/${endpoint}`);
+        expect(url.searchParams.get("period_type")).toBe(periodType);
+        expect(url.searchParams.get("period_mode")).toBe("SOURCE");
+      },
+    );
+
+    it("defaults a missing source period to annual", async () => {
+      const response = { ...envelope, data: endpoint === "summary" ? envelope.data : [] };
+      const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(response)));
+      vi.stubGlobal("fetch", fetchMock);
+      await request({ year: 2024, periodMode: "SOURCE", indicator: "production_t" });
+
+      const url = new URL(fetchMock.mock.calls[0][0]);
+      expect(url.searchParams.get("period_type")).toBe("ANNUAL");
+    });
+
+    it("omits a stale source period in agricultural year mode", async () => {
+      const response = { ...envelope, data: endpoint === "summary" ? envelope.data : [] };
+      const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(response)));
+      vi.stubGlobal("fetch", fetchMock);
+      await request({
+        year: 2024,
+        periodMode: "AGRICULTURAL_YEAR",
+        periodType: "SEMESTER_A",
+        indicator: "production_t",
+      });
+
+      const url = new URL(fetchMock.mock.calls[0][0]);
+      expect(url.searchParams.has("period_type")).toBe(false);
+    });
+  });
 
   it("calls only summary and preserves leading zeroes in DIVIPOLA codes", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
