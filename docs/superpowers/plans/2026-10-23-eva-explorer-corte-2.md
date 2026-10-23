@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-22-eva-explorer-design.md`
 
+**Supersession:** Product naming and standalone Geovisor requirements are superseded by `docs/superpowers/specs/2026-10-23-observatorio-agro-rebrand-chat-design.md`. The current product is Observatorio Agro, Geovisor is omitted from navigation, and cartography is implemented inside Resumen General by `docs/superpowers/plans/2026-10-23-observatorio-agro-mapa-resumen.md`.
+
 ## Global Constraints
 
 - Trabajar sobre la arquitectura y la base real verificadas en el Corte 1; no introducir datos ficticios ni modificar el Excel fuente.
@@ -239,7 +241,6 @@ git commit -m "feat: expose complete EVA source provenance"
 - Create: `frontend/src/app/(platform)/layout.tsx`
 - Move: `frontend/src/app/page.tsx` to `frontend/src/app/(platform)/page.tsx`
 - Move: `frontend/src/app/page.test.tsx` to `frontend/src/app/(platform)/page.test.tsx`
-- Create: `frontend/src/app/(platform)/geovisor/page.tsx`
 - Create: `frontend/src/app/(platform)/comparador/page.tsx`
 - Create: `frontend/src/app/(platform)/acerca/page.tsx`
 - Modify: `frontend/src/components/layout/app-shell.tsx`
@@ -250,11 +251,11 @@ git commit -m "feat: expose complete EVA source provenance"
 
 **Interfaces:**
 - Consumes: query string de filtros compartidos y App Router.
-- Produces: seis enlaces reales, `aria-current="page"`, títulos por ruta, botón de contraer escritorio, panel móvil con control de foco/Escape y enlaces que conservan filtros aplicables.
+- Produces: cinco enlaces reales, `aria-current="page"`, títulos por ruta, botón de contraer escritorio, panel móvil con control de foco/Escape y enlaces que conservan filtros aplicables.
 
 - [ ] **Step 1: Write failing navigation/accessibility tests**
 
-Probar nombres accesibles en modo compacto, ruta activa, conservación de query, apertura/cierre móvil, Escape y retorno de foco. Probar que las seis rutas resuelven: Consulta y Repositorio se completan en este corte; Geovisor, Comparador y Acerca muestran un estado de disponibilidad explícito hasta Corte 3, sin controles simulados.
+Probar nombres accesibles en modo compacto, ruta activa, conservación de query, apertura/cierre móvil, Escape y retorno de foco. Probar que las cinco rutas resuelven: Consulta y Repositorio se completan en este corte; Comparador y Acerca muestran un estado de disponibilidad explícito hasta cortes posteriores, sin controles simulados. Geovisor no aparece ni se crea como ruta independiente.
 
 - [ ] **Step 2: Verify RED**
 
@@ -272,7 +273,7 @@ Run: `cd frontend && pnpm vitest run src/components/layout/app-shell.test.tsx sr
 
 Run: `cd frontend && pnpm lint && pnpm build`
 
-Expected: PASS y seis rutas resolubles aunque las vistas de datos lleguen en Tasks 6–7 y cortes posteriores.
+Expected: PASS y cinco rutas resolubles aunque las vistas de datos lleguen en Tasks 6–7 y cortes posteriores.
 
 - [ ] **Step 5: Commit**
 

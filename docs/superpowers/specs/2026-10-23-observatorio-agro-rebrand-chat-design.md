@@ -41,7 +41,7 @@ Convertir la plataforma en **Observatorio Agro**, un observatorio público de co
 
 ### 1. IA con consultas controladas — seleccionado
 
-Un modelo interpreta la pregunta y selecciona una herramienta de lectura; el backend valida los argumentos, ejecuta consultas determinísticas y entrega los resultados. El modelo redacta la respuesta únicamente a partir de esos resultados.
+Un modelo interpreta la pregunta y selecciona una herramienta de lectura; el backend valida los argumentos, ejecuta consultas determinísticas y redacta la respuesta mediante plantillas a partir de los resultados canónicos. El modelo no redacta ni calcula cifras.
 
 **Ventajas:** comprende variaciones del lenguaje, conserva una conversación natural y mantiene las cifras bajo control del backend.  
 **Costo:** requiere una clave de API y manejo explícito de fallos o límites del proveedor.
@@ -159,7 +159,7 @@ Cada herramienta reutilizará servicios/repositorios analíticos existentes. No 
 3. El modelo solicita una herramienta con argumentos estructurados.
 4. El backend valida cultivos, territorios, periodo, indicador y límites.
 5. El backend ejecuta la consulta determinística.
-6. El modelo redacta usando solamente el resultado estructurado.
+6. El backend redacta la respuesta mediante una plantilla determinística usando el resultado estructurado.
 7. El backend devuelve respuesta, hechos citables, filtros y fuente para que el frontend los muestre por separado.
 
 ## Respuestas seguras y verificables
@@ -168,7 +168,7 @@ Cada herramienta reutilizará servicios/repositorios analíticos existentes. No 
 - Si falta un periodo o indicador indispensable, podrá hacer una pregunta aclaratoria breve o aplicar el filtro activo visible y declararlo.
 - Si hay varias coincidencias de cultivo o territorio, pedirá precisión en lugar de escoger silenciosamente.
 - Si no hay registros, dirá “No encontré datos para esos filtros”.
-- Si el modelo genera texto que contradice los hechos estructurados, el backend conservará los hechos como fuente de verdad y la respuesta se rechazará o reconstruirá con una plantilla segura.
+- El modelo selecciona acciones estructuradas, no redacta cifras. El backend conserva los hechos como fuente de verdad y construye la respuesta con una plantilla segura.
 - Los resultados numéricos conservarán la política estadística del sistema: el rendimiento agregado es producción total dividida por área cosechada total.
 
 ## Configuración local
