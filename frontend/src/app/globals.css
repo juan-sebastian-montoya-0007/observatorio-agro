@@ -602,7 +602,15 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
   .sidebar__nav { margin-left: auto; }
   .sidebar__nav ul { display: flex; }
   .sidebar__nav li:not(:first-child), .sidebar__footer { display: none; }
-  .sidebar__item { width: 42px; min-height: 38px; }
+  .sidebar__item { width: auto; min-height: 38px; }
+  .sidebar__item--active {
+    grid-template-columns: 19px auto;
+    padding-inline: 10px;
+  }
+  .sidebar__item--active > span:not(.sidebar__active-dot) {
+    display: block;
+    white-space: nowrap;
+  }
   .app-shell__workspace { margin-left: 0; }
   .app-header { min-height: 64px; padding: 12px 18px; }
   .app-header__breadcrumb, .source-link { display: none; }

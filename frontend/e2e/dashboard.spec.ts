@@ -1,5 +1,41 @@
 import { expect, test } from "@playwright/test";
 
+test("keeps the Observatorio Agro identity, summary navigation, and production chart guidance", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  await expect(page.getByLabel("Observatorio Agro")).toBeVisible();
+  await expect(page.getByText("Geovisor", { exact: true })).toHaveCount(0);
+
+  const summaryLink = page.getByRole("link", { name: /Resumen General/ });
+  await expect(summaryLink).toBeVisible();
+  await expect(summaryLink).toHaveAttribute("href", "/");
+  await summaryLink.click();
+  await expect(page.getByRole("heading", { name: "Resumen General" })).toBeVisible();
+
+  await expect(
+    page.getByRole("img", {
+      name: /Producción; eje horizontal: Año; eje vertical: Producción \(t\)/,
+    }),
+  ).toBeVisible();
+});
+
+test("keeps the main dashboard controls and content reachable at 390 by 844", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  await expect(page.getByLabel("Observatorio Agro")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Resumen General/ })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Indicador", exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Visualizaciones agrícolas" })).toBeVisible();
+
+  const hasHorizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > window.innerWidth,
+  );
+  expect(hasHorizontalOverflow).toBe(false);
+});
+
 test("persists real dashboard filters and exposes a deterministic empty state", async ({
   page,
   request,
