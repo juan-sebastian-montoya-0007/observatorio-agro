@@ -38,7 +38,11 @@ export function Sidebar() {
             return (
               <li key={module.label}>
                 {module.available ? (
-                  <Link className="sidebar__item sidebar__item--active" href={module.href}>
+                  <Link
+                    aria-label={module.label}
+                    className="sidebar__item sidebar__item--active"
+                    href={module.href}
+                  >
                     <Icon size={19} strokeWidth={1.9} aria-hidden="true" />
                     <span>{module.label}</span>
                     <span className="sidebar__active-dot" aria-hidden="true" />

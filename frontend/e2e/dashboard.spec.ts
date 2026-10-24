@@ -36,6 +36,21 @@ test("keeps the main dashboard controls and content reachable at 390 by 844", as
   expect(hasHorizontalOverflow).toBe(false);
 });
 
+test("keeps Resumen General named and reachable at tablet width", async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 900 });
+  await page.goto("/");
+
+  const summaryLink = page.getByRole("link", { name: "Resumen General", exact: true });
+  await expect(summaryLink).toBeVisible();
+  await summaryLink.focus();
+  await expect(summaryLink).toBeFocused();
+
+  const hasHorizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > window.innerWidth,
+  );
+  expect(hasHorizontalOverflow).toBe(false);
+});
+
 test("persists real dashboard filters and exposes a deterministic empty state", async ({
   page,
   request,
