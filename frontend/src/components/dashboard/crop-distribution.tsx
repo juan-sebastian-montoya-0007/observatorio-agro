@@ -17,9 +17,10 @@ export function CropDistribution({
 }) {
   const label = indicatorLabel(indicator);
   const unit = indicatorUnit(indicator);
+  const labelWithUnit = `${label} (${unit})`;
   const option = useMemo(
     () => ({
-      aria: { enabled: true, description: `Distribución de ${label} por cultivo` },
+      aria: { enabled: true, description: `Distribución de ${labelWithUnit} por cultivo` },
       color: ["#176b45", "#42a579", "#85c7a7", "#d5a537", "#6c8796"],
       tooltip: { trigger: "item", formatter: `{b}: {c} ${unit} ({d}%)` },
       legend: { bottom: 0, type: "scroll", itemWidth: 9, itemHeight: 9 },
@@ -35,7 +36,7 @@ export function CropDistribution({
         },
       ],
     }),
-    [items, label, unit],
+    [items, labelWithUnit, unit],
   );
 
   return (
@@ -56,7 +57,7 @@ export function CropDistribution({
         </div>
       </header>
       <EChart
-        ariaLabel={`Gráfico de distribución de ${label} por cultivo`}
+        ariaLabel={`Distribución de ${labelWithUnit} por cultivo`}
         items={items.map((item) => ({
           label: item.name,
           value: formatIndicator(item.value, indicator),

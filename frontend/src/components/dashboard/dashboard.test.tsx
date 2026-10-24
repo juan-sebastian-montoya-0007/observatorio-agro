@@ -116,6 +116,14 @@ describe("Dashboard", () => {
     expect(screen.getByText("2 t/ha")).toBeVisible();
     expect(screen.getAllByText("PAPA").length).toBeGreaterThan(0);
     expect(
+      screen.getByRole("img", { name: "Distribución de Producción (t) por cultivo" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("list", {
+        name: "Ranking de departamentos por Producción (t)",
+      }),
+    ).toHaveTextContent("ANTIOQUIA54 t");
+    expect(
       screen.getByRole("button", { name: "Información sobre área sembrada" }),
     ).toBeVisible();
     expect(

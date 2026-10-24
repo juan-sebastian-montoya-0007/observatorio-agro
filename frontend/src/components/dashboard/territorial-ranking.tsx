@@ -17,6 +17,7 @@ export function TerritorialRanking({
 }) {
   const label = indicatorLabel(indicator);
   const unit = indicatorUnit(indicator);
+  const levelLabel = level === "municipality" ? "municipios" : "departamentos";
 
   return (
     <article className="panel panel--compact">
@@ -28,14 +29,14 @@ export function TerritorialRanking({
         <div className="panel__actions">
           <InfoTooltip
             label="Información sobre líderes territoriales"
-            content={`Ordena los ${level === "municipality" ? "municipios" : "departamentos"} con mayor ${label.toLocaleLowerCase("es-CO")} para la selección. Unidad: ${unit}.`}
+            content={`Ordena los ${levelLabel} con mayor ${label.toLocaleLowerCase("es-CO")} para la selección. Unidad: ${unit}.`}
           />
           <span className="panel__icon" aria-hidden="true">
             <MapPinned size={19} />
           </span>
         </div>
       </header>
-      <ol className="territory-list">
+      <ol className="territory-list" aria-label={`Ranking de ${levelLabel} por ${label} (${unit})`}>
         {items.map((item) => (
           <li key={item.id}>
             <span className="territory-list__rank">{item.rank}</span>
