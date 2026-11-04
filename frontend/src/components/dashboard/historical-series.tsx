@@ -24,7 +24,7 @@ export function buildHistoricalSeriesOption(indicator: Indicator, points: Series
       description: `Serie histórica de ${config.label}; eje horizontal: Año; eje vertical: ${config.label} (${config.unit})`,
     },
     color: ["#18794e"],
-    grid: { left: 78, right: 24, top: 38, bottom: 58 },
+    grid: { left: 62, right: 13, top: 16, bottom: 43 },
     tooltip: {
       trigger: "axis",
       valueFormatter: (value: number) => `${value} ${config.unit}`,
@@ -33,7 +33,9 @@ export function buildHistoricalSeriesOption(indicator: Indicator, points: Series
       type: "category",
       name: "Año",
       nameLocation: "middle",
-      nameGap: 30,
+      nameGap: 25,
+      nameTextStyle: { fontSize: 9 },
+      axisLabel: { fontSize: 9 },
       boundaryGap: false,
       data: points.map((point) => String(point.year)),
       axisLine: { lineStyle: { color: "#d6dfda" } },
@@ -42,7 +44,9 @@ export function buildHistoricalSeriesOption(indicator: Indicator, points: Series
       type: "value",
       name: `${config.label} (${config.unit})`,
       nameLocation: "middle",
-      nameGap: 58,
+      nameGap: 49,
+      nameTextStyle: { fontSize: 9 },
+      axisLabel: { fontSize: 8, formatter: (value: number) => new Intl.NumberFormat("es-CO", { notation: "compact", maximumFractionDigits: 1 }).format(value) },
       splitLine: { lineStyle: { color: "#edf1ef" } },
     },
     series: [
@@ -50,9 +54,9 @@ export function buildHistoricalSeriesOption(indicator: Indicator, points: Series
         data: points.map((point) => Number(point[indicator] ?? 0)),
         type: "line",
         smooth: 0.22,
-        symbolSize: 7,
-        lineStyle: { width: 3 },
-        areaStyle: { color: "rgba(24, 121, 78, 0.08)" },
+        symbolSize: 6,
+        lineStyle: { width: 2 },
+        areaStyle: { color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: "rgba(55, 151, 75, .43)" }, { offset: 1, color: "rgba(55, 151, 75, .03)" }] } },
       },
     ],
   };
@@ -61,19 +65,20 @@ export function buildHistoricalSeriesOption(indicator: Indicator, points: Series
 export function HistoricalSeries({
   indicator,
   points,
+  onIndicatorChange,
 }: {
   indicator: Indicator;
   points: SeriesPoint[];
+  onIndicatorChange?: (indicator: Indicator) => void;
 }) {
   const config = indicatorConfig[indicator];
   const option = useMemo(() => buildHistoricalSeriesOption(indicator, points), [indicator, points]);
 
   return (
-    <article className="panel panel--wide">
+    <article className="panel panel--history">
       <header className="panel__header">
         <div>
-          <span className="panel__eyebrow">Evolución 2019–2025</span>
-          <h2>Serie histórica</h2>
+          <h2>Evolución histórica <span className="panel__muted">{points[0]?.year ?? 2019} – {points[points.length - 1]?.year ?? 2025}</span></h2>
         </div>
         <div className="panel__actions">
           <InfoTooltip
@@ -85,6 +90,9 @@ export function HistoricalSeries({
           </span>
         </div>
       </header>
+      <div className="metric-tabs" aria-label="Indicador de la serie histórica">
+        {(Object.keys(indicatorConfig) as Indicator[]).map((key) => <button type="button" key={key} className={indicator === key ? "is-active" : ""} aria-pressed={indicator === key} onClick={() => onIndicatorChange?.(key)}>{indicatorConfig[key].label}</button>)}
+      </div>
       <EChart
         ariaLabel={`Gráfico de ${config.label}; eje horizontal: Año; eje vertical: ${config.label} (${config.unit})`}
         items={points.map((point) => ({

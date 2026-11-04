@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ThemeToggle } from "./theme-toggle";
 import {
   BarChart3,
+  ArrowUpRight,
   Database,
   GitCompareArrows,
   Info,
@@ -10,13 +15,14 @@ import {
 
 const modules = [
   { label: "Resumen General", icon: LayoutDashboard, href: "/", available: true },
-  { label: "Consultas", icon: BarChart3, available: false },
-  { label: "Comparador", icon: GitCompareArrows, available: false },
-  { label: "Repositorio", icon: Database, available: false },
+  { label: "Consultas avanzadas", icon: BarChart3, href: "/consultas", available: true },
+  { label: "Comparador", icon: GitCompareArrows, href: "/comparador", available: true },
+  { label: "Repositorio de datos", icon: Database, available: false },
   { label: "Acerca de", icon: Info, available: false },
 ] as const;
 
 export function Sidebar() {
+  const pathname = usePathname();
   return (
     <aside className="sidebar">
       <div className="sidebar__brand" aria-label="Observatorio Agro">
@@ -40,7 +46,8 @@ export function Sidebar() {
                 {module.available ? (
                   <Link
                     aria-label={module.label}
-                    className="sidebar__item sidebar__item--active"
+                    className={`sidebar__item ${pathname === module.href ? "sidebar__item--active" : ""}`}
+                    aria-current={pathname === module.href ? "page" : undefined}
                     href={module.href}
                   >
                     <Icon size={19} strokeWidth={1.9} aria-hidden="true" />
@@ -51,7 +58,6 @@ export function Sidebar() {
                   <div className="sidebar__item sidebar__item--disabled" aria-disabled="true">
                     <Icon size={19} strokeWidth={1.9} aria-hidden="true" />
                     <span>{module.label}</span>
-                    <small>Próximamente</small>
                   </div>
                 )}
               </li>
@@ -60,14 +66,15 @@ export function Sidebar() {
         </ul>
       </nav>
 
+      <ThemeToggle />
       <div className="sidebar__footer">
-        <span className="sidebar__status-dot" aria-hidden="true" />
         <span>
-          Fuente de datos
+          Información oficial del campo colombiano
           <small>
             Datos obtenidos de las Evaluaciones Agropecuarias Municipales (EVA), publicadas
             por la UPRA.
           </small>
+          <a href="https://upra.gov.co/es-co/Paginas/eva.aspx" target="_blank" rel="noreferrer">Ver fuente <ArrowUpRight size={13} aria-hidden="true" /></a>
         </span>
       </div>
     </aside>

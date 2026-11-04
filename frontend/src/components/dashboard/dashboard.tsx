@@ -24,12 +24,14 @@ import { DashboardFilters } from "./dashboard-filters";
 import { HistoricalSeries } from "./historical-series";
 import { KpiGrid } from "./kpi-grid";
 import { TerritorialRanking } from "./territorial-ranking";
+import { TerritorialMap } from "./territorial-map";
 
 type DashboardData = {
   crops: AnalyticalEnvelope<RankingItem[]>;
   series: AnalyticalEnvelope<SeriesPoint[]>;
   summary: AnalyticalEnvelope<Summary | null>;
   territories: AnalyticalEnvelope<RankingItem[]>;
+  municipalities: AnalyticalEnvelope<RankingItem[]>;
 };
 
 type DashboardResult = {
@@ -58,6 +60,7 @@ export function Dashboard() {
     filters.physicalState,
     filters.year,
     filters.periodMode,
+    filters.periodType,
     filters.indicator,
     reload,
   ].join("|");
@@ -93,17 +96,17 @@ export function Dashboard() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const territoryLevel = filters.department ? "municipality" : "department";
     Promise.all([
       getSummary(filters, controller.signal),
       getSeries(filters, controller.signal),
-      getRankings(filters, "crop", 8, controller.signal),
-      getRankings(filters, territoryLevel, 8, controller.signal),
+      getRankings(filters, "crop", 10, controller.signal),
+      getRankings(filters, "department", 7, controller.signal),
+      getRankings(filters, "municipality", 7, controller.signal),
     ])
-      .then(([summary, series, cropResponse, territories]) => {
+      .then(([summary, series, cropResponse, territories, municipalityResponse]) => {
         setResult({
           requestKey,
-          data: { summary, series, crops: cropResponse, territories },
+          data: { summary, series, crops: cropResponse, territories, municipalities: municipalityResponse },
         });
         setFailedRequestKey(null);
       })
@@ -114,6 +117,43 @@ export function Dashboard() {
       });
     return () => controller.abort();
   }, [filters, requestKey]);
+
+  useEffect(() => {
+    const search = (event: Event) => {
+      const query = (event as CustomEvent<string>).detail.trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const matches = (name: string) => name.toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(query);
+      if (!query) return;
+      const crop = crops.find((item) => matches(item.name));
+      const department = departments.find((item) => matches(item.name));
+      const municipality = municipalities.find((item) => matches(item.name));
+      if (crop) setFilter("crop", crop.id);
+      else if (department) setFilter("department", department.code);
+      else if (municipality) setFilter("municipality", municipality.code);
+      window.dispatchEvent(new CustomEvent("agro:search-result", { detail: crop?.name ?? department?.name ?? municipality?.name ?? "Sin coincidencias. Prueba un cultivo o departamento." }));
+    };
+    const exportSummary = () => {
+      if (!result?.data.summary.data || result.requestKey !== requestKey) return;
+      const values = result.data.summary.data;
+      const csv = ["Indicador;Valor;Unidad;Año;Departamento;Cultivo;Fuente", ...[
+        ["Área sembrada", values.planted_area_ha, "ha"],
+        ["Área cosechada", values.harvested_area_ha, "ha"],
+        ["Producción", values.production_t, "t"],
+        ["Rendimiento", values.yield_t_ha ?? "", "t/ha"],
+      ].map((row) => [...row, filters.year, filters.department ?? "Colombia", filters.crop ?? "Todos", "EVA - UPRA"].join(";"))].join("\r\n");
+      const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `observatorio-agro-resumen-${filters.year}.csv`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    window.addEventListener("agro:search", search);
+    window.addEventListener("agro:export", exportSummary);
+    return () => {
+      window.removeEventListener("agro:search", search);
+      window.removeEventListener("agro:export", exportSummary);
+    };
+  }, [crops, departments, municipalities, filters, result, requestKey, setFilter]);
 
   const retry = () => setReload((value) => value + 1);
   const loading = result?.requestKey !== requestKey && failedRequestKey !== requestKey;
@@ -132,12 +172,12 @@ export function Dashboard() {
         <div>
           <span className="dashboard__kicker">Panorama nacional</span>
           <h2>Resumen General</h2>
-          <p>Indicadores consolidados de las Evaluaciones Agropecuarias Municipales.</p>
+          <p>El campo colombiano, en datos. Explora su producción y sus territorios.</p>
         </div>
         <div className="dashboard__context" id="fuente-datos">
           <span>
             <MapPin size={15} aria-hidden="true" />
-            {filters.department ?? "Colombia"}
+            {departments.find((item) => item.code === filters.department)?.name ?? "Colombia"}
           </span>
           <span>
             <CalendarDays size={15} aria-hidden="true" />
@@ -145,9 +185,10 @@ export function Dashboard() {
           </span>
           <span>
             <Database size={15} aria-hidden="true" />
-            {summary.meta.source_version ?? "Sin versión publicada"}
+            {crops.find((item) => item.id === filters.crop)?.name ?? "Todos los cultivos"}
           </span>
         </div>
+        <div className="dashboard__source"><Database size={15} aria-hidden="true" /><div><strong>Datos oficiales</strong><small>Fuente: EVA · UPRA</small></div></div>
       </header>
 
       <DashboardFilters
@@ -163,21 +204,28 @@ export function Dashboard() {
         <EmptyState onReset={resetFilters} />
       ) : (
         <>
-          <KpiGrid summary={summary.data!} />
-          <MethodologyAlert warnings={summary.warnings} />
+          <KpiGrid summary={summary.data!} points={data.series.data} year={filters.year} />
           <section className="dashboard-grid" aria-label="Visualizaciones agrícolas">
-            <HistoricalSeries indicator={filters.indicator} points={data.series.data} />
-            <CropRanking indicator={filters.indicator} items={data.crops.data} />
+            <TerritorialMap filters={filters} onSelect={(level, code) => setFilter(level, code)} />
+            <HistoricalSeries indicator={filters.indicator} points={data.series.data} onIndicatorChange={(indicator) => setFilter("indicator", indicator)} />
+            <CropRanking indicator={filters.indicator} items={data.crops.data} onSelect={(id) => setFilter("crop", Number(id))} />
             <TerritorialRanking
               indicator={filters.indicator}
               items={data.territories.data}
-              level={filters.department ? "municipality" : "department"}
+              level="department"
+              onSelect={(code) => setFilter("department", code)}
+            />
+            <TerritorialRanking
+              indicator={filters.indicator}
+              items={data.municipalities.data}
+              level="municipality"
             />
             <CropDistribution
               indicator={filters.indicator}
               items={data.crops.data.slice(0, 5)}
             />
           </section>
+          <MethodologyAlert warnings={summary.warnings} />
           <footer className="dashboard__methodology">
             <strong>Cómo leer estas cifras</strong>
             <p>{summary.methodology.join(" ")}</p>

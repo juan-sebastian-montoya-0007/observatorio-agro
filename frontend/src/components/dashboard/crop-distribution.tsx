@@ -1,4 +1,3 @@
-import { ChartPie } from "lucide-react";
 import { useMemo } from "react";
 
 import type { RankingItem } from "@/types/api";
@@ -23,12 +22,12 @@ export function CropDistribution({
       aria: { enabled: true, description: `Distribución de ${labelWithUnit} por cultivo` },
       color: ["#176b45", "#42a579", "#85c7a7", "#d5a537", "#6c8796"],
       tooltip: { trigger: "item", formatter: `{b}: {c} ${unit} ({d}%)` },
-      legend: { bottom: 0, type: "scroll", itemWidth: 9, itemHeight: 9 },
+      legend: { right: 0, top: "middle", orient: "vertical", type: "scroll", itemWidth: 6, itemHeight: 6, textStyle: { fontSize: 8, width: 75, overflow: "truncate" } },
       series: [
         {
           type: "pie",
-          radius: ["48%", "70%"],
-          center: ["50%", "43%"],
+          radius: ["40%", "63%"],
+          center: ["33%", "50%"],
           avoidLabelOverlap: true,
           label: { show: false },
           itemStyle: { borderColor: "#fff", borderWidth: 3 },
@@ -40,22 +39,19 @@ export function CropDistribution({
   );
 
   return (
-    <article className="panel panel--compact">
+    <article className="panel panel--compact panel--distribution">
       <header className="panel__header">
         <div>
-          <span className="panel__eyebrow">Composición</span>
-          <h2>Distribución por cultivo</h2>
+          <h2>Composición por cultivo</h2>
         </div>
         <div className="panel__actions">
           <InfoTooltip
             label="Información sobre distribución por cultivo"
             content={`Compara la participación de los cinco cultivos principales en ${label.toLocaleLowerCase("es-CO")}. El tooltip muestra valor, ${unit} y porcentaje.`}
           />
-          <span className="panel__icon" aria-hidden="true">
-            <ChartPie size={19} />
-          </span>
         </div>
       </header>
+      <p className="panel__caption">Cinco principales · {label.toLocaleLowerCase("es-CO")} ({unit})</p>
       <EChart
         ariaLabel={`Distribución de ${labelWithUnit} por cultivo`}
         items={items.map((item) => ({
@@ -64,6 +60,7 @@ export function CropDistribution({
         }))}
         option={option}
       />
+      <p className="panel__footnote">Participación entre los cinco cultivos mostrados.</p>
     </article>
   );
 }

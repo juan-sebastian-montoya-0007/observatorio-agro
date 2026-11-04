@@ -15,6 +15,8 @@ export type DashboardFilters = {
   group?: string;
   subgroup?: string;
   cycle?: string;
+  classification?: string;
+  yearFrom?: number;
   physicalState?: string;
   year: number;
   periodMode: PeriodMode;

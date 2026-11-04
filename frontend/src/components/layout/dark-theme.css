@@ -1,0 +1,41 @@
+.theme-toggle { display:flex; align-items:center; gap:9px; margin:18px 4px; padding:10px 12px; border:1px solid #ffffff40; border-radius:12px; background:#ffffff12; color:#ecfff4; font:inherit; font-size:11px; cursor:pointer; }
+.theme-toggle:hover { background:#ffffff24; }
+html[data-theme=dark] { color-scheme:dark; --canvas:#0d1917; --surface:#172923; --ink-950:#ebf6f1; --ink-700:#c2d7cf; --ink-500:#9bb8ac; --line:#344c43; --forest-700:#6ed6a8; --forest-100:#254a3a; --forest-50:#17362a; }
+[data-theme=dark] .app-shell {
+ --glass-fill:linear-gradient(135deg,#203930eb,#13271fe8); --glass-edge:#7ca38b38; --glass-shadow:0 8px 28px #00000024,inset 0 1px 0 #ffffff12;
+ background:radial-gradient(ellipse at 25% 15%,#1b3f31,transparent 45%),radial-gradient(ellipse at 95% 55%,#172e41,transparent 40%),#0d1917;
+}
+[data-theme=dark] .app-shell .app-header { background:#14271fe8; border-color:#344c43; }
+[data-theme=dark] .app-shell :is(.panel,.kpi-card,.filters,.aq-card,.cmp-card,.cmp-view-tabs,.agro-chat) { background:var(--glass-fill); border-color:var(--glass-edge); color:#dcebe5; }
+[data-theme=dark] .app-shell :is(.advanced,.comparator,.agro-assistant) { color:#dcebe5; }
+[data-theme=dark] .app-shell :is(.panel,.kpi-card,.filters,.aq-card,.cmp-card) :is(h2,h3,strong,label,th,td) { color:#e0eee7; }
+[data-theme=dark] .app-shell :is(.panel,.kpi-card,.filters,.aq-card,.cmp-card) :is(small,p,.chart-data,summary) { color:#b4cbbf; }
+[data-theme=dark] .app-shell :is(select,input[type=search],input[type=number],textarea,.aq-search,.app-header__search) { background:#14271f; color:#e0eee7; border-color:#496355; }
+[data-theme=dark] .app-shell :is(select,input,textarea):disabled { background:#1e2c27; color:#8ca299; }
+[data-theme=dark] .app-shell .app-header__search input { background:transparent; }
+[data-theme=dark] .app-shell :is(.app-header__actions .button,.app-header__help,.button--quiet,.button--outline,.cmp-toolbar button,.cmp-save label,.aq-results__header button) { background:#203b30; color:#dcebe5; border-color:#496355; }
+[data-theme=dark] .app-shell :is(.metric-tabs,.aq-tabs,.cmp-tabs,.cmp-view-tabs) { background:#11251d; border-color:#344c43; }
+[data-theme=dark] .app-shell :is(.metric-tabs,.aq-tabs,.cmp-tabs,.cmp-view-tabs) button:not(.active):not(.is-active):not([aria-selected=true]) { background:#263b32; color:#c8dbd1; }
+[data-theme=dark] .app-shell :is(thead,th) { background:#20372e; }
+[data-theme=dark] .app-shell tbody tr { background:#172b23; }
+[data-theme=dark] .app-shell tbody tr:nth-child(even) { background:#1e332b; }
+[data-theme=dark] .app-shell :is(td,th,table,.chart-data) { border-color:#344c43; }
+[data-theme=dark] .app-shell :is(.aq-summary > div,.cmp-alternative,.cmp-common,.aq-departments,.aq-department-list,.aq-search,.aq-chart,.aq-map) { background:#192f26; border-color:#344c43; color:#dcebe5; }
+[data-theme=dark] .app-shell :is(.territorial-map__canvas) { background:linear-gradient(130deg,#193c42,#223b2b) !important; }
+[data-theme=dark] .app-shell .territorial-map__canvas [role=status] { background:#20392e !important; color:#e4f2e9; }
+[data-theme=dark] .app-shell :is(.kpi-card__icon,.cmp-kpi-icon) { background:#2c4439; color:#9be6c2; }
+[data-theme=dark] .app-shell .kpi-card__change { background:#1d5035; color:#a0edb6; }
+[data-theme=dark] .app-shell .kpi-card__change--negative { background:#542d2c; color:#ffbdb6; }
+[data-theme=dark] .app-shell .agro-chat-log { background:#10251c80; }
+[data-theme=dark] .app-shell .agro-chat-compose { background:#193025; border-color:#344c43; }
+[data-theme=dark] .app-shell :is(.agro-chat-message,.agro-chat-examples button) { background:#243e31; color:#e3f1e9; border-color:#496355; }
+[data-theme=dark] .app-shell .agro-chat-message--user { background:#1f5039; }
+[data-theme=dark] .app-shell :is(.agro-chat-welcome p,.agro-chat-message > small,.agro-chat-source,.agro-chat-compose > small) { color:#bad1c3; }
+[data-theme=dark] .app-shell :is(.agro-chat-message a,.aq-notice,.panel__eyebrow) { color:#80ddb0; }
+[data-theme=dark] .app-shell :is(.agro-chat-error,.aq-error) { color:#ffbdb6; background:#482a28; }
+[data-theme=dark] .app-shell :is(.info-tooltip__content,.info-tooltip__bubble) { background:#213a30; color:#e6f2eb; border-color:#496355; }
+@media (prefers-reduced-transparency:reduce) { [data-theme=dark] .app-shell :is(.panel,.kpi-card,.filters,.aq-card,.cmp-card,.agro-chat) { background:#192e24; } }
+[data-theme=dark] .app-shell .filters label > span { color:#b8cec2; }
+[data-theme=dark] .app-shell .aq-territory-list label.selected { background:#24513c; color:#e0eee7; }
+[data-theme=dark] .app-shell .aq-table-scroll tbody tr:hover { background:#294737; }
+[data-theme=dark] .app-shell :is(.panel__icon,.info-tooltip__trigger) { background:#294737; color:#a7e8c6; }

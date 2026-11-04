@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { BarChart, LineChart, PieChart } from "echarts/charts";
+import { BarChart, LineChart, PieChart, ScatterChart } from "echarts/charts";
 import {
   AriaComponent,
   GridComponent,
@@ -11,6 +11,7 @@ import {
 import * as echarts from "echarts/core";
 import type { EChartsCoreOption } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
+import { useDarkTheme } from "../layout/theme-toggle";
 
 echarts.use([
   AriaComponent,
@@ -20,6 +21,7 @@ echarts.use([
   LegendComponent,
   LineChart,
   PieChart,
+  ScatterChart,
   TooltipComponent,
 ]);
 
@@ -32,19 +34,42 @@ type EChartProps = {
 };
 
 export function EChart({ ariaLabel, items, option }: EChartProps) {
+  const dark = useDarkTheme();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!containerRef.current || process.env.NODE_ENV === "test") return;
-    const chart = echarts.init(containerRef.current, undefined, { renderer: "canvas" });
-    chart.setOption(option);
+    const chart = echarts.init(containerRef.current, dark ? 'dark' : undefined, { renderer: "canvas" });
+    const themed: EChartsCoreOption = { ...option, backgroundColor: 'transparent' };
+    if (dark) {
+      // Keep all data/formatters and series colors; adapt analytical labels and grid lines.
+      for (const key of ['xAxis', 'yAxis']) {
+        const axes = option[key];
+        if (!axes) continue;
+        const adapt = (value: unknown) => {
+          const axis = value as Record<string, unknown>;
+          return ({ ...axis,
+          axisLabel: { ...(axis.axisLabel as object), color: '#c8dbd5' },
+          nameTextStyle: { ...(axis.nameTextStyle as object), color: '#c8dbd5' },
+          splitLine: { ...(axis.splitLine as object), lineStyle: { color: '#314942' } },
+          axisLine: { ...(axis.axisLine as object), lineStyle: { color: '#597369' } },
+        }); };
+        themed[key] = Array.isArray(axes) ? axes.map(adapt) : adapt(axes);
+      }
+      const legend = (value: unknown) => {
+        const item = (value ?? {}) as Record<string, unknown>;
+        return { ...item, textStyle: { ...(item.textStyle as object), color: '#dcebe5' } };
+      };
+      themed.legend = Array.isArray(option.legend) ? option.legend.map(legend) : legend(option.legend);
+    }
+    chart.setOption(themed);
     const resize = () => chart.resize();
     window.addEventListener("resize", resize);
     return () => {
       window.removeEventListener("resize", resize);
       chart.dispose();
     };
-  }, [option]);
+  }, [option, dark]);
 
   return (
     <>

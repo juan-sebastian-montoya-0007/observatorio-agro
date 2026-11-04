@@ -4,7 +4,6 @@ import type { RankingItem } from "@/types/api";
 import type { Indicator } from "@/types/filters";
 import { formatIndicator, indicatorLabel, indicatorUnit } from "@/utils/format";
 
-import { EChart } from "../common/echart";
 import { InfoTooltip } from "../common/info-tooltip";
 
 const compactAxisFormatter = new Intl.NumberFormat("es-CO", {
@@ -59,19 +58,20 @@ export function buildCropRankingOption(indicator: Indicator, items: RankingItem[
 export function CropRanking({
   indicator,
   items,
+  onSelect,
 }: {
   indicator: Indicator;
   items: RankingItem[];
+  onSelect?: (id: string | number) => void;
 }) {
   const label = indicatorLabel(indicator);
   const unit = indicatorUnit(indicator);
-  const option = buildCropRankingOption(indicator, items);
+  const maximum = Math.max(...items.map((item) => Number(item.value)), 1);
 
   return (
-    <article className="panel panel--wide">
+    <article className="panel panel--crops">
       <header className="panel__header">
         <div>
-          <span className="panel__eyebrow">Ranking por {label.toLocaleLowerCase("es-CO")}</span>
           <h2>Principales cultivos</h2>
         </div>
         <div className="panel__actions">
@@ -84,14 +84,12 @@ export function CropRanking({
           </span>
         </div>
       </header>
-      <EChart
-        ariaLabel={`Gráfico de principales cultivos; eje horizontal: ${label} (${unit}); eje vertical: Cultivo`}
-        items={items.map((item) => ({
-          label: item.name,
-          value: formatIndicator(item.value, indicator),
-        }))}
-        option={option}
-      />
+      <p className="panel__caption">Por {label.toLocaleLowerCase("es-CO")} · {unit}</p>
+      <div className="crop-bars" role="table" aria-label={`Principales cultivos: ${label} (${unit})`}>
+        <div className="sr-only" role="row"><span role="columnheader">Cultivo</span><span role="columnheader">{label} ({unit})</span></div>
+        {items.map((item) => <div className="crop-bars__row" role="row" key={item.id}><span className="crop-bars__rank" aria-hidden="true">{item.rank}</span><button type="button" role="cell" onClick={() => onSelect?.(item.id)} title={`Filtrar por ${item.name}`}>{item.name}</button><span className="crop-bars__track" aria-hidden="true"><span style={{ width: `${Number(item.value) / maximum * 100}%` }} /></span><strong role="cell">{formatIndicator(item.value, indicator)}</strong></div>)}
+      </div>
+      <p className="panel__footnote">Selecciona un cultivo para explorar sus datos.</p>
     </article>
   );
 }

@@ -9,10 +9,23 @@ from app.db.session import get_session
 from app.repositories.catalog import CatalogRepository
 from app.schemas.catalog import DepartmentOut, MunicipalityOut
 from app.schemas.common import AnalyticalResponse
+from app.schemas.filters import AgricultureFilters
+from app.services.cartography import territorial_map
 
 router = APIRouter(prefix="/geography", tags=["geography"])
 SessionDependency = Annotated[Session, Depends(get_session)]
 DepartmentCodeQuery = Annotated[str, Query()]
+
+
+@router.get("/map")
+def map_data(filters: Annotated[AgricultureFilters, Query()], session: SessionDependency):
+    try:
+        return territorial_map(session, filters)
+    except (OSError, ValueError, KeyError) as error:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "MAP_UNAVAILABLE", "message": "Cartografía no disponible."},
+        ) from error
 
 
 @router.get("/departments", response_model=AnalyticalResponse[list[DepartmentOut]])

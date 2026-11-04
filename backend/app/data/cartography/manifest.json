@@ -1,0 +1,28 @@
+{
+  "publisher": "DANE",
+  "name": "Marco Geoestadístico Nacional 2025",
+  "source_url": "https://geoportal.dane.gov.co/mparcgis/rest/services/MGN2025/Serv_CapasMGN_2025/FeatureServer",
+  "retrieved_at": "2026-10-24T06:21:20.675131+00:00",
+  "crs": "EPSG:4326",
+  "note": "Geometrías oficiales generalizadas para visualización estadística.",
+  "layers": {
+    "department": {
+      "layer": 319,
+      "file": "departments.geojson",
+      "feature_count": 33,
+      "sha256": "66e728ee1c2530193019c45e56b7df52dea5ad6e93a0184d89f829bdf72243c1",
+      "download_sha256": "42826559c49606c434461f7714f27e7484c1837fdbd7270e9df146e39d3a9f22",
+      "max_allowable_offset_degrees": 0.008,
+      "query_url": "https://geoportal.dane.gov.co/mparcgis/rest/services/MGN2025/Serv_CapasMGN_2025/FeatureServer/319/query?where=1%3D1&outFields=DPTO_CCDGO%2CDPTO_CNMBRE%2CDPTO_CCDGO&outSR=4326&f=geojson&returnGeometry=true&maxAllowableOffset=0.008&geometryPrecision=5"
+    },
+    "municipality": {
+      "layer": 317,
+      "file": "municipalitys.geojson",
+      "feature_count": 1122,
+      "sha256": "9748a3e989d1de108390328e0143c9e5eeacb7a6de3f0d3a216e5a9adadcd0ef",
+      "download_sha256": "6ac3815a3c4cfc6238f383eb9549a06462355ca3a99ff3d12a03f82ea444685c",
+      "max_allowable_offset_degrees": 0.002,
+      "query_url": "https://geoportal.dane.gov.co/mparcgis/rest/services/MGN2025/Serv_CapasMGN_2025/FeatureServer/317/query?where=1%3D1&outFields=MPIO_CDPMP%2CMPIO_CNMBRE%2CDPTO_CCDGO&outSR=4326&f=geojson&returnGeometry=true&maxAllowableOffset=0.002&geometryPrecision=5"
+    }
+  }
+}

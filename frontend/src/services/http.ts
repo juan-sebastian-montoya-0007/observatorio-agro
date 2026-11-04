@@ -1,6 +1,6 @@
 import type { AnalyticalEnvelope } from "@/types/api";
 
-const DEFAULT_API_BASE_URL = "http://localhost:8000";
+const DEFAULT_API_BASE_URL = "";
 
 export class ApiError extends Error {
   constructor(

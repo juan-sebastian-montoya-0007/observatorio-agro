@@ -7,6 +7,7 @@ __pycache__/
 .ruff_cache/
 .venv/
 .env
+.key-setup-private/
 backend/.venv/
 backend/data/raw/
 backend/data/processed/
@@ -18,3 +19,7 @@ frontend/playwright-report/
 frontend/test-results/
 *.xlsx
 *.xls
+
+/tmp/
+.env.*
+!.env.example

@@ -19,6 +19,7 @@ class AgricultureFilters(BaseModel):
     group: str | None = None
     subgroup: str | None = None
     cycle: str | None = None
+    classification: str | None = None
     physical_state: str | None = None
     year_from: int = Field(default=2019, ge=2019, le=2025)
     year_to: int = Field(default=2025, ge=2019, le=2025)

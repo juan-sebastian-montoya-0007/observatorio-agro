@@ -390,6 +390,7 @@ class AgricultureRepository:
             (filters.group, CropGroup.name),
             (filters.subgroup, CropSubgroup.name),
             (filters.cycle, Crop.cycle),
+            (filters.classification, Crop.general_classification),
             (filters.physical_state, PhysicalState.name),
         )
         for value, column in optional_conditions:

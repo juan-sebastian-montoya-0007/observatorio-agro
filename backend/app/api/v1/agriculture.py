@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import get_session
@@ -15,10 +15,16 @@ from app.schemas.common import AnalyticalResponse
 from app.schemas.filters import AgricultureFilters
 from app.schemas.records import RecordPageQuery
 from app.services.analytics import AnalyticsService
+from app.services.advanced import AdvancedQuery, advanced_query
 
 router = APIRouter(prefix="/agriculture", tags=["agriculture"])
 SessionDependency = Annotated[Session, Depends(get_session)]
 FilterQuery = Annotated[AgricultureFilters, Query()]
+
+
+@router.get('/advanced')
+def advanced(query: Annotated[AdvancedQuery, Query()], session: SessionDependency):
+    return advanced_query(session, query)
 
 
 @router.get("/records", response_model=AnalyticalResponse[RecordPageOut])
@@ -43,14 +49,6 @@ def rankings(
     dimension: Annotated[RankingDimension, Query()],
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
 ):
-    if dimension is RankingDimension.MUNICIPALITY and filters.department_code is None:
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "code": "MISSING_PARENT_FILTER",
-                "message": "municipality ranking requires a department filter",
-            },
-        )
     return AnalyticsService(session).rankings(
         filters,
         dimension=dimension.value,
